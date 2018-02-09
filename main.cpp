@@ -186,35 +186,47 @@ std::vector<Slice> generate_array_of_slices(Pizza pizza)
 
 int main(int argc, char** argv)
 {
-    //pcg::init(atoi(argv[2]), 54u);
-    pcg::init(1080833423459783, 54u);
+    pcg::init(atoi(argv[2]), 54u);
+    //pcg::init(1080833423459783, 54u);
 
-    //g_depth = atoi(argv[3]);
-    g_depth = 50000000;
+    g_depth = atoi(argv[3]);
+    //g_depth = 50000000;
 
-    auto pizza = Pizza::from_file("medium.in");
+    auto pizza = Pizza::from_file(argv[1]);
 
     size_t max_score = 0;
+    uint score;
 
-    uint64_t n = 1;
+    uint64_t n = 0;
+    std::vector<Slice> slicesBest;
 
-    while (true)
+    while (n < atoi(argv[4]))
     {
         auto slices = generate_array_of_slices(pizza);
 
-        auto score = score_slices(slices);
+        score = score_slices(slices);
 
         if (max_score < score)
         {
             max_score = score;
-
-            std::cout << score << ' ' << n*g_depth << '\n';
-
-            for (const auto& slice : slices)
-            std::printf("%d %d %d %d\n", slice.rowBegin, slice.columnBegin, slice.rowEnd, slice.columnEnd);
+            slicesBest = slices;
+//
+  //          //std::cout << score << ' ' << n*g_depth << '\n';
+    //        std::cout << slices.size() << '\n';
+//
+  //          for (const auto& slice : slices)
+    //        std::printf("%d %d %d %d\n", slice.rowBegin, slice.columnBegin, slice.rowEnd, slice.columnEnd);
         }
         n++;
     }
+    
+
+          //std::cout << score << ' ' << n*g_depth << '\n';
+          std::cout << slicesBest.size() << '\n';
+
+           for (const auto& slice : slicesBest)
+         std::printf("%d %d %d %d\n", slice.rowBegin, slice.columnBegin, slice.rowEnd, slice.columnEnd);
+  
 
     return 0;
 }
