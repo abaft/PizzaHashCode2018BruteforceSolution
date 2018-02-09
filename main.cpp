@@ -85,8 +85,7 @@ struct Pizza
     while (!file.eof())
     {
       char c;
-      file >> c;
-
+      file >> c; 
       switch (c)
       {
         case 'T': ingredients[iter] = Ingredient::Tomato; break;
@@ -111,15 +110,26 @@ struct Slice
   {
     Slice slice;
 
-    uint r1 = (uint)pcg::get_random() % pizza.rows;
-    uint c1 = (uint)pcg::get_random() % pizza.cols;
-    uint r2 = (uint)pcg::get_random() % pizza.rows;
-    uint c2 = (uint)pcg::get_random() % pizza.cols;
+    //uint r1 = (uint)pcg::get_random() % pizza.rows;
+    //uint c1 = (uint)pcg::get_random() % pizza.cols;
+    //uint r2 = (uint)pcg::get_random() % pizza.rows;
+    //uint c2 = (uint)pcg::get_random() % pizza.cols;
 
-    slice.rowBegin = r1 <= r2 ? r1:r2;
-    slice.rowEnd = r1 > r2 ? r1:r2;
-    slice.columnBegin = c1 <= c2 ? c1:c2;
-    slice.columnEnd = c1 > c2 ? c1:c2;
+    //slice.rowBegin = r1 <= r2 ? r1:r2;
+    //slice.rowEnd = r1 > r2 ? r1:r2;
+    //slice.columnBegin = c1 <= c2 ? c1:c2;
+    //slice.columnEnd = c1 > c2 ? c1:c2;
+
+    slice.rowBegin = (uint)pcg::get_random() % pizza.rows;
+    slice.columnBegin = (uint)pcg::get_random() % pizza.cols;
+
+    do
+      slice.rowEnd = slice.rowBegin + (uint)pcg::get_random() % (pizza.maxCells + 1);
+    while (slice.rowEnd >= pizza.rows);
+
+    do
+      slice.columnEnd = slice.columnBegin + (uint)pcg::get_random() % (pizza.maxCells + 1);
+    while (slice.columnEnd >= pizza.cols);
 
     return slice;
   }
@@ -188,10 +198,8 @@ std::vector<Slice> generate_array_of_slices(Pizza pizza)
 int main(int argc, char** argv)
 {
   pcg::init(atoll(argv[2]), 54u);
-  //pcg::init(1080833423459783, 54u);
 
   g_depth = atoi(argv[3]);
-  //g_depth = 50000000;
 
   auto pizza = Pizza::from_file(argv[1]);
 
@@ -208,13 +216,13 @@ int main(int argc, char** argv)
 
     if (max_score < score)
     {
-
       max_score = score;
+
       std::fstream file;
       std::remove(argv[4]);
+      file << slices.size() << '\n';
       file.open(argv[4], std::fstream::out);
       std::cout << score << '\n';
-      file << slices.size() << '\n';
       for (const auto& slice : slices){
         file << slice.rowBegin << ' ';
         file << slice.columnBegin << ' ';
