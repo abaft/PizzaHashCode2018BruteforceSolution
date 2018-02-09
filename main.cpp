@@ -21,18 +21,15 @@ namespace pcg
     uint32_t pcg32_random_r(pcg32_random_t& rng)
     {
         auto oldState = rng.state;
-
         // Advance internal state
-        rng.state = oldState * 6364136223846793005ULL + (rng.inc | 1);
-
+        rng.state = oldState * 6364136223846793005ULL + (rng.inc|1);
         // Calculate output function (XSH RR), uses old state for max ILP
         uint32_t xorShifted = ((oldState >> 18u) xor oldState) >> 27u;
         uint32_t rot = oldState >> 59u;
-
         return (xorShifted >> rot) | (xorShifted << ((-rot) & 31));
     }
 
-    uint get_random() { return pcg32_random_r(random); }
+  uint get_random() { return pcg32_random_r(random); }
 }
 
 uint g_depth;
@@ -46,19 +43,18 @@ enum class Ingredient
 
 struct Pizza
 {
-    const uint rows;
-    const uint cols;
-    const uint maxCells;
-    const uint minIngredients;
-    std::vector<Ingredient> ingredients;
+  const uint rows;
+  const uint cols;
+  const uint maxCells;
+  const uint minIngredients;
+  std::vector<Ingredient> ingredients;
 
-    Ingredient& get(const uint row, const uint col) { return ingredients[row * cols + col]; }
+  Ingredient& get(const uint row, const uint col) { return ingredients[row * cols + col]; }
     const Ingredient& get(const uint row, const uint col) const { return ingredients[row * cols + col]; }
 
-    void mask_piece(const uint row, const uint col) { ingredients[row * cols + col]; }
+  void mask_piece(const uint row, const uint col) { ingredients[row * cols + col]; }
 
-    template<class Iter1, class Iter2>
-    Pizza(const Iter1 iterBegin, const Iter2 iterEnd, const uint rows, const uint cols, const uint ingredientsMin, const uint maxCells)
+    template<class Iter1, class Iter2>Pizza(const Iter1 iterBegin, const Iter2 iterEnd, const uint rows, const uint cols, const uint ingredientsMin, const uint maxCells)
             : ingredients(iterBegin, iterEnd), rows(rows), cols(cols), minIngredients(ingredientsMin), maxCells(maxCells)  { }
 
     static Pizza from_file(const std::string_view& filename)
@@ -100,16 +96,16 @@ struct Pizza
             iter++;
         }
 
-        return Pizza(ingredients.begin(), ingredients.end(), rows, cols, minIngredient, maxCells);
-    }
+    return Pizza(ingredients.begin(), ingredients.end(), rows, cols, minIngredient, maxCells);
+  }
 };
 
 struct Slice
 {
-    uint rowBegin;
-    uint rowEnd;
-    uint columnBegin;
-    uint columnEnd;
+  uint rowBegin;
+  uint rowEnd;
+  uint columnBegin;
+  uint columnEnd;
     Pizza* pizza;
 
     Slice(Pizza* pizza, const uint rowBegin, const uint rowEnd, const uint columnBegin, const uint columnEnd):
@@ -126,25 +122,38 @@ struct Slice
         pizza = s.pizza;
     }
 
-    static Slice random_slice(const Pizza& pizza)
-    {
-        uint r1 = (uint) pcg::get_random() % pizza.rows;
-        uint c1 = (uint) pcg::get_random() % pizza.cols;
-        uint r2 = (uint) pcg::get_random() % pizza.rows;
-        uint c2 = (uint) pcg::get_random() % pizza.cols;
+  static Slice random_slice(const Pizza& pizza)
+  {
+    Slice slice;
 
-        slice.rowBegin = r1 <= r2 ? r1:r2;
-        slice.rowEnd = r1 > r2 ? r1:r2;
-        slice.columnBegin = c1 <= c2 ? c1:c2;
-        slice.columnEnd = c1 > c2 ? c1:c2;
+    //uint r1 = (uint)pcg::get_random() % pizza.rows;
+    //uint c1 = (uint)pcg::get_random() % pizza.cols;
+    //uint r2 = (uint)pcg::get_random() % pizza.rows;
+    //uint c2 = (uint)pcg::get_random() % pizza.cols;
 
-        return Slice();
-    }
+    //slice.rowBegin = r1 <= r2 ? r1:r2;
+    //slice.rowEnd = r1 > r2 ? r1:r2;
+    //slice.columnBegin = c1 <= c2 ? c1:c2;
+    //slice.columnEnd = c1 > c2 ? c1:c2;
 
-    bool check(Pizza &pizza) const
-    {
-        uint mushrooms = 0;
-        uint tomatoes = 0;
+    slice.rowBegin = (uint)pcg::get_random() % pizza.rows;
+    slice.columnBegin = (uint)pcg::get_random() % pizza.cols;
+
+    do
+      slice.rowEnd = slice.rowBegin + (uint)pcg::get_random() % (pizza.maxCells + 1);
+    while (slice.rowEnd >= pizza.rows);
+
+    do
+      slice.columnEnd = slice.columnBegin + (uint)pcg::get_random() % (pizza.maxCells + 1);
+    while (slice.columnEnd >= pizza.cols);
+
+    return Slice();
+  }
+
+  bool check(Pizza &pizza) const
+  {
+    uint mushrooms = 0;
+    uint tomatoes = 0;
 
         for (int i = rowBegin; i <= rowEnd; ++i)
         {
@@ -163,7 +172,7 @@ struct Slice
     }
 };
 
-void mark_slice_as_used(const Pizza& pizza, const Slice& s)
+void mark_slice_as_used(Pizza& pizza, const Slice& s)
 {
     for (uint i = s.rowBegin; i <= s.rowEnd; i++)
         for (uint j = s.columnBegin; j <= s.columnEnd; j++)
@@ -189,9 +198,9 @@ std::vector<Slice> generate_array_of_slices(Pizza pizza)
     {
         auto temp = Slice::random_slice(pizza);
 
-        if (temp.check(pizza))
-        {
-            slices.push_back(temp);
+    if (temp.check(pizza))
+    {
+      slices.push_back(temp);
 
             mark_slice_as_used(pizza, temp);
             l_depth = g_depth;
@@ -212,27 +221,36 @@ int main(int argc, char** argv)
 
     auto pizza = Pizza::from_file("medium.in");
 
-    size_t max_score = 0;
+  size_t max_score = 0;
+  uint score;
 
-    uint64_t n = 1;
+  uint64_t n = 0;
 
-    while (true)
+  while (true)
+  {
+    auto slices = generate_array_of_slices(pizza);
+
+    score = score_slices(slices);
+
+    if (max_score < score)
     {
-        auto slices = generate_array_of_slices(pizza);
+      max_score = score;
 
-        auto score = score_slices(slices);
-
-        if (max_score < score)
-        {
-            max_score = score;
-
-            std::cout << score << ' ' << n*g_depth << '\n';
-
-            for (const auto& slice : slices)
-            std::printf("%d %d %d %d\n", slice.rowBegin, slice.columnBegin, slice.rowEnd, slice.columnEnd);
-        }
-        n++;
+      std::fstream file;
+      std::remove(argv[4]);
+      file << slices.size() << '\n';
+      file.open(argv[4], std::fstream::out);
+      std::cout << score << '\n';
+      for (const auto& slice : slices){
+        file << slice.rowBegin << ' ';
+        file << slice.columnBegin << ' ';
+        file << slice.rowEnd << ' ';
+        file << slice.columnEnd << ' ' << '\n';
+      }
+      file.close();
     }
+    n++;
+  }
 
-    return 0;
+  return 0;
 }
